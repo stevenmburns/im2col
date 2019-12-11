@@ -1,35 +1,36 @@
 import numpy as np
+
+import scipy 
+
 import time
 
 def test_A():
     H = 48
     W = 64
     K = 9
+    OC = 4
 
     assert K<=H and K<=W
 
     input = np.random.randint( 255, size=(H,W), dtype=np.int32) - 128
     print( "input.shape", input.shape)
-    kernels = np.random.randint( 255, size=(K,K), dtype=np.int32) - 128
+    kernels = np.random.randint( 255, size=(K,K,OC), dtype=np.int32) - 128
     print( "kernels.shape", kernels.shape)
 
     before = time.time()
-    output = np.zeros( (H-K+1,W-K+1), dtype=np.int32)
-
-
+    output = np.zeros( (H-K+1,W-K+1,OC), dtype=np.int32)
     for h in range(H-K+1):
         for w in range(W-K+1):
-            sum = 0
-            for i in range(K):
-                for j in range(K):
-                    sum += input[h+i][w+j] * kernels[i][j]
-            output[h][w] = sum
+            for oc in range(OC):
+                sum = 0
+                for i in range(K):
+                    for j in range(K):
+                        sum += input[h+i][w+j] * kernels[i][j][oc]
+                output[h][w][oc] = sum
     print( "Naive compute time:", time.time()-before)
 
-
     print( "output.shape", output.shape)
-    unrolled_output = np.ndarray.view(output).reshape( ((H-K+1)*(W-K+1),))
-    print( "unrolled_output", unrolled_output.shape)
+    unrolled_output = np.ndarray.view(output).reshape( ((H-K+1)*(W-K+1),OC))
 
     before = time.time()
     patches = np.zeros( ((H-K+1),(W-K+1),K,K), dtype=np.int32)
@@ -41,9 +42,11 @@ def test_A():
 #                    patches[h][w][i][j] = input[h+i][w+j]
     print( "Patch generation time:", time.time()-before)
 
+    print( "unrolled_output", unrolled_output.shape)
+
     unrolled_patches = np.ndarray.view( patches).reshape( ((H-K+1)*(W-K+1),K*K))
 
-    unrolled_kernels = np.ndarray.view( kernels).reshape( (K*K,))
+    unrolled_kernels = np.ndarray.view( kernels).reshape( (K*K,OC))
 
     before = time.time()
     result = np.dot(unrolled_patches,unrolled_kernels)
@@ -52,7 +55,7 @@ def test_A():
 
     assert np.all( unrolled_output==result)
 
-    rerolled_result = np.ndarray.view( result).reshape( (H-K+1,W-K+1))
+    rerolled_result = np.ndarray.view( result).reshape( (H-K+1,W-K+1,OC))
     print( "rerolled_result.shape", rerolled_result.shape)
 
     assert np.all( output==rerolled_result)
