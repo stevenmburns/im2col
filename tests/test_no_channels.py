@@ -1,10 +1,12 @@
 import numpy as np
 import time
+import pytest
 
-def test_A():
-    H = 48
-    W = 64
-    K = 9
+@pytest.mark.parametrize("params", [(48,64,9),(768,1024,1)])
+def test_A(params):
+    print()
+    print("params", params)
+    H,W,K = params
 
     assert K<=H and K<=W
 
@@ -32,13 +34,16 @@ def test_A():
     print( "unrolled_output", unrolled_output.shape)
 
     before = time.time()
-    patches = np.zeros( ((H-K+1),(W-K+1),K,K), dtype=np.int32)
-    for h in range(H-K+1):
-        for w in range(W-K+1):
-            patches[h][w] = input[h:h+K,w:w+K]
-#            for i in range(K):
-#                for j in range(K):
-#                    patches[h][w][i][j] = input[h+i][w+j]
+    if K == 1:
+        patches = input
+    else:
+        patches = np.zeros( ((H-K+1),(W-K+1),K,K), dtype=np.int32)
+        for h in range(H-K+1):
+            for w in range(W-K+1):
+                patches[h][w] = input[h:h+K,w:w+K]
+#                for i in range(K):
+#                    for j in range(K):
+#                        patches[h][w][i][j] = input[h+i][w+j]
     print( "Patch generation time:", time.time()-before)
 
     unrolled_patches = np.ndarray.view( patches).reshape( ((H-K+1)*(W-K+1),K*K))
