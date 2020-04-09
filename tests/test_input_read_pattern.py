@@ -86,7 +86,8 @@ def A( tag, params):
 #                print()
         
         f = ch.misses/(ch.hits+ch.misses)
-        miss_tally[cs] = f'Cache size: {cs} Hits: {ch.hits} Misses: {ch.misses} Fraction of misses: {f} {f*ch.linesize} {1/(f*ch.linesize)}'
+        perfect = params[3]*params[3]/(params[4]*params[4])
+        miss_tally[cs] = f'Cache size: {cs} Hits: {ch.hits} Misses: {ch.misses} Fraction of misses: {f} {f*ch.linesize} {1/(f*ch.linesize)} {perfect}'
 #        print( miss_tally[cs])
 
     for (k,v) in miss_tally.items():
